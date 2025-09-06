@@ -1,9 +1,12 @@
-fastapi>=0.110.0
-uvicorn>=0.27.0
-sqlalchemy>=2.0.0
-pydantic>=2.7.1
-python-multipart>=0.0.7  # For image upload
-Pillow>=10.2.0           # Image support
-python-dotenv>=1.0.0
-psycopg2        # PostgreSQL
-fastapi-users>=12.1.0    # Auth & JWT
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-multipart
+Pillow
+python-dotenv
+psycopg2
+alembic
+fastapi-users
+fastapi-jwt-auth
+psycopg2-binary
