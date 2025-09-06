@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# EcoFinds - Sustainable Second-Hand Marketplace
 
-## Project info
+![EcoFinds Logo](/path-to-logo.png) 
 
-**URL**: https://lovable.dev/projects/6658b658-0a46-468b-8d5b-0d07ae20e511
+## Overview
 
-## How can I edit this code?
+EcoFinds is a user-friendly platform designed to empower sustainable consumption by connecting buyers and sellers of second-hand goods. The goal is to reduce waste, extend product lifecycles, and inspire a circular economy through an accessible and engaging marketplace.
 
-There are several ways of editing your application.
+This project is developed as a foundational prototype focusing on:
 
-**Use Lovable**
+- Secure user authentication and profile management
+- Creating, managing, and browsing second-hand product listings
+- Basic cart and purchase functionalities
+- Filtering and keyword search for product discovery
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6658b658-0a46-468b-8d5b-0d07ae20e511) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## Features
 
-**Use your preferred IDE**
+- **User Authentication:** Register and login securely with email and password.
+- **Profile Management:** Users can create and update their profiles.
+- **Product Listings:** Create, edit, and delete products with title, description, category, price, and image placeholder.
+- **Product Browsing:** Browse available listings with category filters and keyword search.
+- **Cart:** Add products to cart and review before purchase.
+- **Purchase History:** View previous purchases linked to user accounts.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Technologies Used
 
-Follow these steps:
+- **Backend:** FastAPI (Python)
+- **Database:** MongoDB (Motor async driver)
+- **Authentication:** JWT Tokens
+- **Data Validation:** Pydantic Models
+- **Deployment:** Uvicorn ASGI server
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Getting Started
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Prerequisites
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+- Python 3.9+
+- MongoDB (local or cloud Atlas instance)
+- Git
 
-**Edit a file directly in GitHub**
+### Installation
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. **Clone the repository:**
 
-**Use GitHub Codespaces**
+git clone https://github.com/yourusername/ecofinds.git
+cd ecofinds/backend
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+2. **Create and activate virtual environment:**
 
-This project is built with:
+python -m venv env
+source env/bin/activate # Unix/macOS
+env\Scripts\activate # Windows PowerShell
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/6658b658-0a46-468b-8d5b-0d07ae20e511) and click on Share -> Publish.
+## Usage
 
-## Can I connect a custom domain to my Lovable project?
+- Use API endpoints to register users, authenticate, and manage product listings.
+- Use frontend or API clients to interact with product browsing, cart, and purchase features.
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Future Enhancements
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- Image upload and storage integration
+- Payment gateway integration for checkout
+- Notification system for purchase updates
+- Enhanced search with faceted filtering and sorting
+- Responsive frontend using ReactJS or similar
+
+---
+
+## Contributing
+
+Contributions are welcome! Please fork the repo and submit pull requests.
+
+---
+
+## License
+
+MIT License © 2025 Your Name or Organization
+
+---
+
+## Contact
+
+For questions or collaboration, reach out via email at [snpatel2315@gmail.com].
+
+---
+
