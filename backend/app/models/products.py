@@ -1,18 +1,24 @@
-# File: backend/app/models/product.py
+from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Float
-from sqlalchemy.orm import relationship
-from app.core.database import Base
+class ProductBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category: str
+    price: float
+    image_url: Optional[str] = "placeholder.png"
 
-class Product(Base):
-    __tablename__ = "products"
+class ProductCreate(ProductBase):
+    pass
 
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True, nullable=False)
-    description = Column(String, nullable=True)
-    category = Column(String, index=True, nullable=False)
-    price = Column(Float, nullable=False)
-    image_url = Column(String, nullable=True, default="placeholder.png")
+class ProductInDB(ProductBase):
+    id: str = Field(..., alias="_id")
+    owner_id: str  # MongoDB ObjectId stored as string
+    created_at: datetime
 
-    owner_id = Column(Integer, ForeignKey("users.id"))
-    owner = relationship("User", back_populates="products")
+    class Config:
+        allow_population_by_field_name = True
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat(),
+        }

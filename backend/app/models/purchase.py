@@ -1,16 +1,21 @@
-
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
-from app.core.database import Base
+from pydantic import BaseModel, Field
+from typing import Optional
 from datetime import datetime
 
-class Purchase(Base):
-    __tablename__ = "purchases"
+class PurchaseBase(BaseModel):
+    user_id: str    # MongoDB user ObjectId as string
+    product_id: str # MongoDB product ObjectId as string
+    purchased_at: Optional[datetime] = None
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    product_id = Column(Integer, ForeignKey("products.id"))
-    purchased_at = Column(DateTime, default=datetime.utcnow)
+class PurchaseCreate(PurchaseBase):
+    pass
 
-    user = relationship("User", back_populates="purchases")
-    product = relationship("Product")
+class Purchase(PurchaseBase):
+    id: str = Field(..., alias="_id")
+    purchased_at: datetime
+
+    class Config:
+        allow_population_by_field_name = True
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat(),
+        }

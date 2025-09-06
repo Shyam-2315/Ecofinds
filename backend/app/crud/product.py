@@ -1,5 +1,5 @@
 from typing import List, Optional
-from app.core.mongodb import db
+from app.core.database import db
 from app.schemas.product import ProductCreate, ProductRead
 from bson.objectid import ObjectId
 from datetime import datetime

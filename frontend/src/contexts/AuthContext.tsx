@@ -1,103 +1,128 @@
-import React, { createContext, useContext, useEffect, useState } from "react"
-
-interface User {
-  id: string
-  email: string
-  username: string
-}
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User } from '@/types';
 
 interface AuthContextType {
-  user: User | null
-  token: string | null
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, username: string, password: string) => Promise<void>
-  logout: () => void
-  loading: boolean
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: any) => Promise<void>;
+  logout: () => void;
+  updateProfile: (userData: Partial<User>) => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
-}
+  return context;
+};
 
-interface AuthProviderProps {
-  children: React.ReactNode
-}
-
-// Set your actual FastAPI backend URL below:
-const API_BASE_URL = "http://localhost:8000" // Change to your deployed backend if needed
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("ecofinds_token")
-    const storedUser = localStorage.getItem("ecofinds_user")
-    if (storedToken) setToken(storedToken)
-    if (storedUser) setUser(JSON.parse(storedUser))
-    setLoading(false)
-  }, [])
+    // Check for stored auth token and user data
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedToken && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+    setIsLoading(false);
+  }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-    if (!response.ok) throw new Error("Login failed")
-    const data = await response.json()
-    const { access_token } = data
-
-    // Optionally: fetch user profile after login, or use returned info if backend provides it
-    let userData: User | null = null
+    setIsLoading(true);
     try {
-      // If your login returns user info, add it here: userData = data.user
-      // Otherwise, fetch user profile endpoint if needed
-      userData = { id: "", email, username: "" }
-      // If backend supports profile endpoint, fetch it here to get details
-    } catch (err) {
-      userData = { id: "", email, username: "" }
+      // Mock authentication - replace with actual API call
+      const mockUser: User = {
+        _id: '1',
+        firstName: 'Sarah',
+        lastName: 'Johnson',
+        email,
+        rating: 4.8,
+        totalSales: 24,
+        totalPurchases: 18,
+        joinDate: new Date('2024-03-01'),
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem('token', 'mock-jwt-token');
+      localStorage.setItem('user', JSON.stringify(mockUser));
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    setToken(access_token)
-    setUser(userData)
-    localStorage.setItem("ecofinds_token", access_token)
-    localStorage.setItem("ecofinds_user", JSON.stringify(userData))
-  }
-
-  const register = async (email: string, username: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, username, password }),
-    })
-    if (!response.ok) throw new Error("Registration failed")
-    // Registration succeeded, auto-login
-    await login(email, password)
-  }
+  const register = async (userData: any) => {
+    setIsLoading(true);
+    try {
+      // Mock registration - replace with actual API call
+      const mockUser: User = {
+        _id: '1',
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        rating: 0,
+        totalSales: 0,
+        totalPurchases: 0,
+        joinDate: new Date(),
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem('token', 'mock-jwt-token');
+      localStorage.setItem('user', JSON.stringify(mockUser));
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const logout = () => {
-    setUser(null)
-    setToken(null)
-    localStorage.removeItem("ecofinds_token")
-    localStorage.removeItem("ecofinds_user")
-  }
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  };
 
-  const value: AuthContextType = {
+  const updateProfile = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
+  const value = {
     user,
-    token,
+    isAuthenticated: !!user,
+    isLoading,
     login,
     register,
     logout,
-    loading,
-  }
+    updateProfile,
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

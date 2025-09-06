@@ -1,96 +1,134 @@
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Heart, ShoppingCart } from 'lucide-react';
-import { useState } from 'react';
-
-interface Product {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  image_url?: string;
-  seller_id: string;
-  created_at: string;
-}
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Heart, MapPin } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "sonner";
 
 interface ProductCardProps {
-  product: Product;
-  onAddToCart?: (productId: string) => void;
-  onClick?: () => void;
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  category: string;
+  location: string;
+  condition: "Like New" | "Good" | "Fair";
+  seller: string;
+  liked?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({
-  product,
-  onAddToCart,
-  onClick,
-}) => {
-  const [isLiked, setIsLiked] = useState(false);
+const ProductCard = ({ 
+  id, 
+  title, 
+  price, 
+  image, 
+  category, 
+  location, 
+  condition, 
+  seller, 
+}: ProductCardProps) => {
+  const { addItem, isInCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onAddToCart?.(product.id);
+  const conditionColors = {
+    "Like New": "bg-eco-accent text-white",
+    "Good": "bg-eco-secondary text-eco-primary", 
+    "Fair": "bg-eco-earth text-white"
   };
 
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsLiked(!isLiked);
+  const handleAddToCart = async () => {
+    if (isInCart(id)) {
+      toast.info('Item already in cart');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      addItem({
+        id,
+        title,
+        price,
+        image,
+        seller,
+        location,
+        shipping: price > 50 ? 0 : 5 // Free shipping over $50
+      });
+    } catch (error) {
+      toast.error('Failed to add to cart');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Card 
-      className="group cursor-pointer hover:shadow-[var(--shadow-eco)] transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-background to-muted/30"
-      onClick={onClick}
-    >
-      <CardContent className="p-0">
-        <div className="relative aspect-square overflow-hidden rounded-t-lg">
-          <img
-            src={product.image_url || "/placeholder.svg"}
-            alt={product.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-[var(--shadow-eco)] hover:-translate-y-1 border-eco-secondary/50">
+      <div className="relative aspect-square overflow-hidden">
+        <Link to={`/product/${id}`}>
+          <img 
+            src={image} 
+            alt={title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`absolute top-2 right-2 bg-background/80 hover:bg-background ${
-              isLiked ? 'text-red-500' : 'text-muted-foreground'
-            }`}
-            onClick={handleLike}
-          >
-            <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-          </Button>
-          <Badge 
-            variant="secondary" 
-            className="absolute top-2 left-2 bg-eco-green/90 text-primary-foreground"
-          >
-            {product.category}
+        </Link>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`absolute top-2 right-2 h-8 w-8 rounded-full p-0 ${
+            isFavorite(id) ? 'bg-red-100 text-red-500' : 'bg-white/80 text-gray-600'
+          }`}
+          onClick={() => toggleFavorite(id)}
+        >
+          <Heart className={`h-4 w-4 ${isFavorite(id) ? 'fill-current' : ''}`} />
+        </Button>
+        <Badge className={`absolute top-2 left-2 ${conditionColors[condition]}`}>
+          {condition}
+        </Badge>
+      </div>
+      
+      <CardContent className="p-4">
+        <div className="mb-2">
+          <Badge variant="outline" className="text-xs text-eco-primary border-eco-primary">
+            {category}
           </Badge>
         </div>
         
-        <div className="p-4">
-          <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-eco-green transition-colors">
-            {product.title}
+        <Link to={`/product/${id}`}>
+          <h3 className="font-semibold text-foreground line-clamp-2 mb-2 hover:text-eco-primary transition-colors">
+            {title}
           </h3>
-          <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-            {product.description}
-          </p>
-          <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-eco-green">
-              ${product.price.toFixed(2)}
-            </span>
-            <Button
-              variant="eco"
-              size="sm"
-              onClick={handleAddToCart}
-              className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            >
-              <ShoppingCart className="h-4 w-4 mr-1" />
-              Add
-            </Button>
-          </div>
+        </Link>
+        
+        <div className="flex items-center text-sm text-muted-foreground mb-2">
+          <MapPin className="h-3 w-3 mr-1" />
+          {location} • by {seller}
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <span className="text-xl font-bold text-eco-primary">
+            ${price}
+          </span>
         </div>
       </CardContent>
+
+      <CardFooter className="p-4 pt-0">
+        <Button 
+          className={`w-full transition-all duration-300 ${
+            isInCart(id) 
+              ? 'bg-eco-secondary text-eco-primary hover:bg-eco-secondary/80' 
+              : 'bg-gradient-to-r from-eco-primary to-eco-primary-light hover:shadow-[var(--shadow-glow)]'
+          }`}
+          onClick={handleAddToCart}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Adding...' : isInCart(id) ? 'In Cart' : 'Add to Cart'}
+        </Button>
+      </CardFooter>
     </Card>
   );
 };
+
+export default ProductCard;

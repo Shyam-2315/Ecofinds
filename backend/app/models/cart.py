@@ -1,14 +1,22 @@
+from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import datetime
 
-from sqlalchemy import Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship
-from app.core.database import Base
+class CartItemBase(BaseModel):
+    user_id: str       # MongoDB ObjectId as string
+    product_id: str    # MongoDB ObjectId as string
+    quantity: Optional[int] = 1   # Default quantity is 1
+    added_at: Optional[datetime] = None
 
-class Cart(Base):
-    __tablename__ = "carts"
+class CartItemCreate(CartItemBase):
+    pass
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    product_id = Column(Integer, ForeignKey("products.id"))
+class Cart(CartItemBase):
+    id: str = Field(..., alias="_id")
+    added_at: datetime
 
-    user = relationship("User", back_populates="carts")
-    product = relationship("Product")
+    class Config:
+        allow_population_by_field_name = True
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat(),
+        }

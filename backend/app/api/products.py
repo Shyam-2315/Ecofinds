@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from typing import List, Optional
 from app.schemas.product import ProductCreate, ProductRead
 from app.core.auth import get_current_user
-from app.models.user import User
+from app.models.users import UserInDB
 from app.core.database import db  # Use your mongodb.py file here (correct import)
 from bson.objectid import ObjectId
 import shutil
@@ -17,7 +17,7 @@ UPLOAD_DIRECTORY = "backend/uploads"
 @router.post("/", response_model=ProductRead)
 async def create_product(
     product: ProductCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: UserInDB = Depends(get_current_user),
 ):
     product_dict = product.dict()
     product_dict.update({
@@ -34,7 +34,7 @@ async def create_product(
 async def update_product(
     product_id: str,
     product_data: ProductCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: UserInDB = Depends(get_current_user),
 ):
     obj_id = ObjectId(product_id)
     product = await db.products.find_one({"_id": obj_id})
@@ -53,7 +53,7 @@ async def update_product(
 @router.delete("/{product_id}")
 async def delete_product(
     product_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: UserInDB = Depends(get_current_user),
 ):
     obj_id = ObjectId(product_id)
     product = await db.products.find_one({"_id": obj_id})
