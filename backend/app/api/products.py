@@ -1,90 +1,104 @@
-# File: backend/app/api/products.py
-
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
-from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.schemas.product import ProductCreate, ProductRead
-from app.models.products import Product
-from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.user import User
+from app.core.database import db  # Use your mongodb.py file here (correct import)
+from bson.objectid import ObjectId
 import shutil
 import os
+import datetime
 
 router = APIRouter(prefix="/products", tags=["products"])
 
 UPLOAD_DIRECTORY = "backend/uploads"
 
+
 @router.post("/", response_model=ProductRead)
-def create_product(
+async def create_product(
     product: ProductCreate,
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    db_product = Product(**product.dict(), owner_id=current_user.id)
-    db.add(db_product)
-    db.commit()
-    db.refresh(db_product)
-    return db_product
+    product_dict = product.dict()
+    product_dict.update({
+        "owner_id": current_user.id,
+        "created_at": datetime.datetime.utcnow()
+    })
+
+    result = await db.products.insert_one(product_dict)
+    product_dict["_id"] = str(result.inserted_id)
+    return ProductRead(**product_dict)
+
 
 @router.put("/{product_id}", response_model=ProductRead)
-def update_product(
-    product_id: int,
+async def update_product(
+    product_id: str,
     product_data: ProductCreate,
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    product = db.query(Product).filter(Product.id == product_id).first()
+    obj_id = ObjectId(product_id)
+    product = await db.products.find_one({"_id": obj_id})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    if product.owner_id != current_user.id:
+    if product.get("owner_id") != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to update this product")
-    for key, value in product_data.dict().items():
-        setattr(product, key, value)
-    db.commit()
-    db.refresh(product)
-    return product
+
+    update_data = product_data.dict(exclude_unset=True)
+    await db.products.update_one({"_id": obj_id}, {"$set": update_data})
+    updated_product = await db.products.find_one({"_id": obj_id})
+    updated_product["_id"] = str(updated_product["_id"])
+    return ProductRead(**updated_product)
+
 
 @router.delete("/{product_id}")
-def delete_product(
-    product_id: int,
-    db: Session = Depends(get_db),
+async def delete_product(
+    product_id: str,
     current_user: User = Depends(get_current_user),
 ):
-    product = db.query(Product).filter(Product.id == product_id).first()
+    obj_id = ObjectId(product_id)
+    product = await db.products.find_one({"_id": obj_id})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    if product.owner_id != current_user.id:
+    if product.get("owner_id") != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to delete this product")
-    db.delete(product)
-    db.commit()
+
+    await db.products.delete_one({"_id": obj_id})
     return {"detail": "Product deleted successfully"}
 
+
 @router.get("/", response_model=List[ProductRead])
-def list_products(
-    db: Session = Depends(get_db),
+async def list_products(
     category: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     limit: int = Query(10, ge=1),
     offset: int = Query(0, ge=0),
 ):
-    query = db.query(Product)
+    query = {}
     if category:
-        query = query.filter(Product.category == category)
+        query["category"] = category
     if search:
-        query = query.filter(Product.title.ilike(f"%{search}%"))
-    products = query.offset(offset).limit(limit).all()
+        query["title"] = {"$regex": search, "$options": "i"}
+
+    cursor = db.products.find(query).skip(offset).limit(limit)
+    products = []
+    async for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        products.append(ProductRead(**doc))
     return products
 
+
 @router.get("/{product_id}", response_model=ProductRead)
-def get_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
+async def get_product(product_id: str):
+    obj_id = ObjectId(product_id)
+    product = await db.products.find_one({"_id": obj_id})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    return product
+    product["_id"] = str(product["_id"])
+    return ProductRead(**product)
+
 
 @router.post("/upload-image/")
-def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...)):
     if not os.path.exists(UPLOAD_DIRECTORY):
         os.makedirs(UPLOAD_DIRECTORY)
     file_location = os.path.join(UPLOAD_DIRECTORY, file.filename)

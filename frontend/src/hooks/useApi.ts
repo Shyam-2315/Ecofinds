@@ -1,17 +1,23 @@
-import { useAuth } from '@/contexts/AuthContext';
+// src/hooks/useApi.ts
 
-const API_BASE_URL = 'https://your-api-url.com/api';
+import { useAuth } from "@/contexts/AuthContext";
+
+const API_BASE_URL = "http://localhost:8000";
 
 export const useApi = () => {
   const { token } = useAuth();
 
-  const makeRequest = async (endpoint: string, options: RequestInit = {}) => {
+  const makeRequest = async (
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<any> => {
     const url = `${API_BASE_URL}${endpoint}`;
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
+
+    // Ensure correct Content-Type for JSON requests, except file uploads
+    const headers: HeadersInit = {
+      ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
     };
 
     const response = await fetch(url, {
@@ -19,8 +25,20 @@ export const useApi = () => {
       headers,
     });
 
+    // Optionally, get backend error message for easier debugging
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      let errorMsg = `API Error: ${response.status} ${response.statusText}`;
+      try {
+        const data = await response.json();
+        if (data && data.detail) errorMsg = data.detail;
+      } catch {
+        // nothing
+      }
+      throw new Error(errorMsg);
+    }
+
+    if (response.status === 204) {
+      return null;
     }
 
     return response.json();
@@ -28,31 +46,42 @@ export const useApi = () => {
 
   return {
     get: (endpoint: string) => makeRequest(endpoint),
-    post: (endpoint: string, data: any) => makeRequest(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-    put: (endpoint: string, data: any) => makeRequest(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-    delete: (endpoint: string) => makeRequest(endpoint, {
-      method: 'DELETE',
-    }),
+    post: (endpoint: string, data: any) =>
+      makeRequest(endpoint, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    put: (endpoint: string, data: any) =>
+      makeRequest(endpoint, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    delete: (endpoint: string) =>
+      makeRequest(endpoint, {
+        method: "DELETE",
+      }),
     uploadFile: async (endpoint: string, file: File) => {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          // No Content-Type; browser sets for FormData
         },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`Upload Error: ${response.status} ${response.statusText}`);
+        let errorMsg = `Upload Error: ${response.status} ${response.statusText}`;
+        try {
+          const data = await response.json();
+          if (data && data.detail) errorMsg = data.detail;
+        } catch {
+          // nothing
+        }
+        throw new Error(errorMsg);
       }
 
       return response.json();

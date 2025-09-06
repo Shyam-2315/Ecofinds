@@ -1,20 +1,24 @@
-
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
+from datetime import datetime
 
 class ProductBase(BaseModel):
     title: str
-    description: Optional[str] = None
-    category: str
+    description: str
     price: float
-    image_url: Optional[str] = "placeholder.png"
+    category: str
+    image_url: Optional[str]
 
 class ProductCreate(ProductBase):
     pass
 
-class ProductRead(ProductBase):
-    id: int
-    owner_id: int
+class ProductInDB(ProductBase):
+    id: str = Field(None, alias="_id")
+    owner_id: str
+    created_at: datetime
 
     class Config:
-        orm_mode = True
+        allow_population_by_field_name = True
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat()
+        }

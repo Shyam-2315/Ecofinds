@@ -1,10 +1,27 @@
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, ShoppingCart, User, Plus, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Plus,
+  LogOut,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavbarProps {
   searchQuery: string;
@@ -15,15 +32,15 @@ interface NavbarProps {
 }
 
 const categories = [
-  'All Categories',
-  'Electronics',
-  'Clothing',
-  'Books',
-  'Furniture',
-  'Sports',
-  'Home & Garden',
-  'Toys',
-  'Other'
+  "All Categories",
+  "Electronics",
+  "Clothing",
+  "Books",
+  "Furniture",
+  "Sports",
+  "Home & Garden",
+  "Toys",
+  "Other",
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -38,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -61,12 +78,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 placeholder="Search for sustainable treasures..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && onSearch()}
+                onKeyPress={(e) => e.key === "Enter" && onSearch()}
                 className="pl-10"
+                aria-label="Search products"
               />
             </div>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48" aria-label="Select category">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -77,7 +95,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="eco" onClick={onSearch}>
+            <Button variant="eco" onClick={onSearch} aria-label="Search">
               <Search className="h-4 w-4" />
             </Button>
           </div>
@@ -99,12 +117,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" aria-label="User menu">
                       <User className="h-4 w-4 mr-1" />
-                      {user.username}
+                      {user.username || user.email}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-background border border-border">
+                  <DropdownMenuContent
+                    align="end"
+                    className="bg-background border border-border"
+                  >
                     <DropdownMenuItem asChild>
                       <Link to="/dashboard">Dashboard</Link>
                     </DropdownMenuItem>
